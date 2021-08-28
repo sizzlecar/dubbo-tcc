@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.carl.geek.service.b.dao.UserAccountMapperExt">
+
+
+    <select id="selectOneForUpdate" parameterType="com.carl.geek.service.b.model.UserAccount" resultMap="BaseResultMap">
+        select
+            <include refid="Base_Column_List" />
+        from user_account
+        <where>
+            <if test="id != null">
+                id = #{id}
+            </if>
+
+            <if test="userId != null">
+                and user_id = #{userId}
+            </if>
+
+            <if test="type != null">
+                and type = #{type}
+            </if>
+        </where>
+        limit 1
+        for update
+    </select>
+  
+
+</mapper>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE generatorConfiguration PUBLIC
+        "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd" >
+<generatorConfiguration>
+    <!-- 引入配置文件 -->
+    <properties resource="dao-config.properties"/>
+
+    <context id="MySQLTables" targetRuntime="MyBatis3">
+        <property name="javaFileEncoding" value="UTF-8"/>
+        <property name="beginningDelimiter" value="`"/>
+        <property name="endingDelimiter" value="`"/>
+
+        <plugin type="com.carl.geek.common.generator.mybatis.plugin.ExtModelGeneratorPlugin"/>
+        <plugin type="com.carl.geek.common.generator.mybatis.plugin.ExtXMLMapperGeneratorPlugin" />
+
+
+        <jdbcConnection driverClass="${jdbc.driver}"
+                        connectionURL="${jdbc.url}"
+                        userId="${jdbc.username}"
+                        password="${jdbc.password}"/>
+
+        <javaTypeResolver>
+            <property name="forceBigDecimals" value="false"/>
+        </javaTypeResolver>
+
+        <javaModelGenerator targetPackage="${model.package}" targetProject="${model.project}">
+            <property name="constructorBased" value="false"/>
+            <property name="trimStrings" value="true"/>
+            <property name="rootClass" value="${model.rootClass}"/>
+            <property name="partitionInterface" value="${model.partitionInterface}"/>
+        </javaModelGenerator>
+
+        <sqlMapGenerator targetPackage="${xml.mapper.package}" targetProject="${xml.mapper.project}">
+            <property name="partitionTableNameAppend" value="${xml.mapper.partitionTableNameAppend}"/>
+            <property name="partitionTableNamePrefix" value="${xml.mapper.partitionTableNamePrefix}"/>
+        </sqlMapGenerator>
+
+        <javaClientGenerator type="XMLMAPPER" targetPackage="${dao.package}" targetProject="${dao.project}">
+            <!--<property name="rootInterface" value="${dao.rootInterface}"/>-->
+            <property name="partitionRootInterface" value="${dao.partitionRootInterface}"/>
+            <property name="methodGenerate" value="${dao.methodGenerate}"/>
+        </javaClientGenerator>
+
+
+        <table tableName="user_account" delimitAllColumns="${table.delimitAllColumns}"
+               enableCountByExample="${table.enableCountByExample}"
+               enableUpdateByExample="${table.enableUpdateByExample}"
+               enableDeleteByExample="${table.enableDeleteByExample}"
+               enableSelectByExample="${table.enableSelectByExample}"
+               selectByExampleQueryId="${table.selectByExampleQueryId}">
+            <generatedKey column="id" sqlStatement="JDBC"/>
+        </table>
+    </context>
+</generatorConfiguration>
