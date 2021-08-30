@@ -73,6 +73,14 @@
 				<version>30.1.1-jre</version>
 			</dependency>
 
+			<!-- https://mvnrepository.com/artifact/org.apache.dubbo/dubbo-spring-boot-starter -->
+			<dependency>
+				<groupId>org.apache.dubbo</groupId>
+				<artifactId>dubbo-spring-boot-starter</artifactId>
+				<version>3.0.2.1</version>
+			</dependency>
+
+
 
 
 

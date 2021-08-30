@@ -8,11 +8,11 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.config.annotation.DubboService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@DubboService(version = "1.0.0", tag = "blue")
 public class AccountOperateImpl implements AccountOperate {
 
     private final UserAccountMapperExt userAccountMapperExt;
