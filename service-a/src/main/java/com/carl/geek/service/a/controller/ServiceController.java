@@ -1,6 +1,6 @@
 package com.carl.geek.service.a.controller;
 
-import com.carl.geek.api.AccountOperate;
+import com.carl.geek.api.Service1AccountOperate;
 import com.carl.geek.api.AccountOperateBean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class ServiceController implements ApplicationContextAware {
 
-    private final AccountOperate accountOperate;
+    private final Service1AccountOperate accountOperate;
 
 
     @PostMapping("/operate")

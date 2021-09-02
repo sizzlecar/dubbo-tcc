@@ -43,7 +43,7 @@
         </javaClientGenerator>
 
 
-        <table tableName="user_account" delimitAllColumns="${table.delimitAllColumns}"
+        <table tableName="user_account_freeze" delimitAllColumns="${table.delimitAllColumns}"
                enableCountByExample="${table.enableCountByExample}"
                enableUpdateByExample="${table.enableUpdateByExample}"
                enableDeleteByExample="${table.enableDeleteByExample}"

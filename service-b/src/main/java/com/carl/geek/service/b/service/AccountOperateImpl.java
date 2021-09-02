@@ -1,7 +1,8 @@
 package com.carl.geek.service.b.service;
 
-import com.carl.geek.api.AccountOperate;
 import com.carl.geek.api.AccountOperateBean;
+import com.carl.geek.api.CrossDatabaseBean;
+import com.carl.geek.api.Service2AccountOperate;
 import com.carl.geek.service.b.dao.UserAccountMapperExt;
 import com.carl.geek.service.b.model.UserAccount;
 import com.google.common.cache.Cache;
@@ -25,7 +26,7 @@ import java.util.stream.Stream;
 @Slf4j
 @RequiredArgsConstructor
 @DubboService(version = "1.0.0", group = "b")
-public class AccountOperateImpl implements AccountOperate {
+public class AccountOperateImpl implements Service2AccountOperate {
 
     private final UserAccountMapperExt userAccountMapperExt;
 
@@ -129,6 +130,46 @@ public class AccountOperateImpl implements AccountOperate {
             }
 
 
+        }
+        return true;
+    }
+
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean crossDatabase(CrossDatabaseBean accountOperateBean) {
+        String targetUserId = accountOperateBean.getLocalUserId();
+        UserAccount paraAccount = new UserAccount();
+        paraAccount.setType(accountOperateBean.getAccountType());
+        paraAccount.setUserId(targetUserId);
+        Object targetLock = accountLockCache.getIfPresent(targetUserId);
+        if (targetLock == null) {
+            synchronized (fromCacheLock) {
+                if (accountLockCache.getIfPresent(targetUserId) == null) {
+                    Object fromLockObj = new Object();
+                    accountLockCache.put(targetUserId, fromLockObj);
+                    targetLock = fromLockObj;
+                }
+                targetLock = targetLock == null ? accountLockCache.getIfPresent(targetUserId) : targetLock;
+            }
+        }
+
+        synchronized (targetLock) {
+            UserAccount userAccount = userAccountMapperExt.selectOneForUpdate(paraAccount);
+            if (userAccount == null) {
+                throw new RuntimeException("查询数据异常");
+            }
+            BigDecimal balance = userAccount.getBalance();
+            BigDecimal updateMoney = balance.add(accountOperateBean.getAmount());
+            if (BigDecimal.ZERO.compareTo(updateMoney) > 0) {
+                throw new RuntimeException("余额不足");
+            }
+            UserAccount updateModel = new UserAccount();
+            updateModel.setId(userAccount.getId());
+            updateModel.setUpdateTime(new Date());
+            updateModel.setBalance(updateMoney);
+            userAccountMapperExt.updateByPrimaryKeySelective(updateModel);
         }
         return true;
     }
