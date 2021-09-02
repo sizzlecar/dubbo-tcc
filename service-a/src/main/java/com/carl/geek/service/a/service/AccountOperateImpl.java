@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@DubboService(version = "1.0.0", tag = "blue")
+@DubboService(version = "1.0.0", group = "a")
 public class AccountOperateImpl implements AccountOperate {
 
     private final UserAccountMapperExt userAccountMapperExt;

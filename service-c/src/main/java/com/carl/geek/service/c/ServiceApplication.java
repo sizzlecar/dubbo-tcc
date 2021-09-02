@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * @author carl.che
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.carl.geek.service.c"})
 public class ServiceApplication {
 
 

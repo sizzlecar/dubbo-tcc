@@ -1,6 +1,10 @@
 server:
   port: 8082
 
+spring:
+  application:
+    name: dubbo-provider-b
+
 service-b:
   datasource:
     master:
@@ -25,7 +29,7 @@ dubbo:
     base-packages: com.carl.geek.service.b.service
   protocol:
     name: dubbo
-    port: 12345
+    port: 12346
   registry:
     address: zookeeper://localhost:2181
   metadata-report:
