@@ -9,10 +9,10 @@ import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
  */
 @SpringBootApplication(scanBasePackages = {"com.carl.geek.service.a"},
         exclude = MongoAutoConfiguration.class)
-public class ServiceApplication {
+public class ServiceAApplication {
 
 
     public static void main(String[] args) {
-        SpringApplication.run(ServiceApplication.class, args);
+        SpringApplication.run(ServiceAApplication.class, args);
     }
 }

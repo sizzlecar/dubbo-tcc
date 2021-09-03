@@ -2,7 +2,7 @@ package com.carl.geek.service.b.service;
 
 import com.carl.geek.api.AccountOperateBean;
 import com.carl.geek.api.CrossDbLocalOpBean;
-import com.carl.geek.api.ServiceAccountOperate;
+import com.carl.geek.api.ServiceBAccountOperate;
 import com.carl.geek.service.b.dao.UserAccountFreezeMapperExt;
 import com.carl.geek.service.b.dao.UserAccountMapperExt;
 import com.carl.geek.service.b.model.UserAccount;
@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 @Slf4j
 @RequiredArgsConstructor
 @DubboService(version = "1.0.0", group = "b")
-public class AccountOperateImpl implements ServiceAccountOperate {
+public class AccountOperateImpl implements ServiceBAccountOperate {
 
     private final UserAccountMapperExt userAccountMapperExt;
     private final UserAccountFreezeMapperExt userAccountFreezeMapperExt;
@@ -144,6 +144,7 @@ public class AccountOperateImpl implements ServiceAccountOperate {
     @Transactional(rollbackFor = Exception.class)
     @HmilyTCC(confirmMethod = "crossDbLocalOpConfirm", cancelMethod = "crossDbLocalOpCancel")
     public boolean crossDbLocalOp(CrossDbLocalOpBean accountOperateBean) {
+        log.info("service-b try is running");
         Integer accountType = accountOperateBean.getAccountType();
         String localUserId = accountOperateBean.getTargetUserId();
         BigDecimal amount = accountOperateBean.getAmount();
@@ -182,6 +183,7 @@ public class AccountOperateImpl implements ServiceAccountOperate {
 
     @Transactional(rollbackFor = Exception.class)
     public void crossDbLocalOpConfirm(CrossDbLocalOpBean crossDatabaseReq) {
+        log.info("crossDbLocalOpConfirm执行中");
         String targetUserId = crossDatabaseReq.getTargetUserId();
         UserAccount paraAccount = new UserAccount();
         paraAccount.setType(crossDatabaseReq.getAccountType());
@@ -214,6 +216,7 @@ public class AccountOperateImpl implements ServiceAccountOperate {
 
     @Transactional(rollbackFor = Exception.class)
     public void crossDbLocalOpCancel(CrossDbLocalOpBean crossDatabaseReq) {
+        log.info("crossDbLocalOpCancel执行中");
         //分布式事物出现异常，删除冻结，同时将钱复原
         Integer userAccountFreezeId = crossDatabaseReq.getUserAccountFreezeId();
         String localUserId = crossDatabaseReq.getTargetUserId();

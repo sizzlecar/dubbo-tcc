@@ -1,7 +1,7 @@
 package com.carl.geek.service.b.controller;
 
-import com.carl.geek.api.ServiceAccountOperate;
 import com.carl.geek.api.AccountOperateBean;
+import com.carl.geek.api.ServiceBAccountOperate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ServiceController {
 
-    private final ServiceAccountOperate accountOperate;
+    private final ServiceBAccountOperate accountOperate;
 
 
     @PostMapping("/operate")

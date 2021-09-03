@@ -9,7 +9,7 @@ spring:
 service-c:
   datasource:
     master:
-      url: jdbc:mysql://localhost:3326/db_0?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+      url: jdbc:mysql://localhost:3336/db_0?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
       username: root
       password:
       driver-class-name: com.mysql.cj.jdbc.Driver

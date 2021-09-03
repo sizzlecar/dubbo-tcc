@@ -1,9 +1,6 @@
 package com.carl.geek.service.c.service;
 
-import com.carl.geek.api.CrossDatabaseBean;
-import com.carl.geek.api.CrossDbLocalOpBean;
-import com.carl.geek.api.CrossDbOp;
-import com.carl.geek.api.ServiceAccountOperate;
+import com.carl.geek.api.*;
 import com.carl.geek.service.c.dao.TransferLogMapperExt;
 import com.carl.geek.service.c.model.TransferLog;
 import lombok.RequiredArgsConstructor;
@@ -25,10 +22,10 @@ import java.util.Date;
 public class SomeService implements CrossDbOp {
 
     @DubboReference(version = "1.0.0", group = "a")
-    private ServiceAccountOperate aService;
+    private ServiceAAccountOperate aService;
 
     @DubboReference(version = "1.0.0", group = "b")
-    private ServiceAccountOperate bService;
+    private ServiceBAccountOperate bService;
 
     private final TransferLogMapperExt transferLogMapperExt;
 
@@ -62,11 +59,13 @@ public class SomeService implements CrossDbOp {
         bOpBean.setAccountType(accountType);
         bOpBean.setAmount(amount);
         bService.crossDbLocalOp(bOpBean);
+        if( 1 == 1 )  throw new RuntimeException("11111");
         return true;
     }
 
     @Transactional(rollbackFor = Exception.class)
     public boolean crossDbOpConfirm(CrossDatabaseBean crossDatabaseBean){
+        log.info("crossDbOpConfirm执行中");
         Integer logId = crossDatabaseBean.getLogId();
         if(logId != null){
             TransferLog updateModel = new TransferLog();
@@ -84,6 +83,7 @@ public class SomeService implements CrossDbOp {
 
     @Transactional(rollbackFor = Exception.class)
     public boolean crossDbOpCancel(CrossDatabaseBean crossDatabaseBean){
+        log.info("crossDbOpCancel执行中");
         Integer logId = crossDatabaseBean.getLogId();
         if(logId != null){
             TransferLog updateModel = new TransferLog();

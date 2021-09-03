@@ -5,7 +5,7 @@ import org.dromara.hmily.annotation.Hmily;
 /**
  * @author carl.che
  */
-public interface ServiceAccountOperate {
+public interface ServiceBAccountOperate {
 
     /**
      * 账号操作接口(账号余额的增加，减少)
