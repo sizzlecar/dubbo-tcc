@@ -43,4 +43,6 @@ public class CrossDatabaseBean {
      * 冻结表id
      */
     private Integer userAccountFreezeId;
+
+    private Integer logId;
 }

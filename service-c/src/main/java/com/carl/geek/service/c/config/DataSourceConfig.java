@@ -2,12 +2,24 @@ package com.carl.geek.service.c.config;
 
 
 import com.zaxxer.hikari.HikariDataSource;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.SqlSessionTemplate;
+import org.mybatis.spring.boot.autoconfigure.ConfigurationCustomizer;
+import org.mybatis.spring.mapper.MapperScannerConfigurer;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.PlatformTransactionManager;
+
+import javax.sql.DataSource;
 
 /**
  * @author carl.che
@@ -29,7 +41,7 @@ public class DataSourceConfig {
         return dataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
 
-    /*@Primary
+    @Primary
     @Bean("masterSqlSessionFactory")
     @ConditionalOnBean(name = "masterDatasource")
     public SqlSessionFactory masterSqlSessionFactory(@Qualifier("masterDatasource") DataSource dataSource) throws Exception {
@@ -63,12 +75,12 @@ public class DataSourceConfig {
     @ConditionalOnBean(name = "masterSqlSessionFactory")
     public SqlSessionTemplate masterSqlSessionTemplate(@Qualifier("masterSqlSessionFactory") SqlSessionFactory sqlSessionFactory){
         return new SqlSessionTemplate(sqlSessionFactory);
-    }*/
+    }
 
-    /*@Bean("masterTransaction")
+    @Bean("masterTransaction")
     @ConditionalOnBean(name = "masterDatasource")
     public PlatformTransactionManager transactionManager(@Qualifier("masterDatasource") DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);
-    }*/
+    }
 
 }
