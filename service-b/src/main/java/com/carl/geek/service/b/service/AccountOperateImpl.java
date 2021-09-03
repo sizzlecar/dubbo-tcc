@@ -1,15 +1,18 @@
 package com.carl.geek.service.b.service;
 
 import com.carl.geek.api.AccountOperateBean;
-import com.carl.geek.api.CrossDatabaseBean;
-import com.carl.geek.api.Service2AccountOperate;
+import com.carl.geek.api.CrossDbLocalOpBean;
+import com.carl.geek.api.ServiceAccountOperate;
+import com.carl.geek.service.b.dao.UserAccountFreezeMapperExt;
 import com.carl.geek.service.b.dao.UserAccountMapperExt;
 import com.carl.geek.service.b.model.UserAccount;
+import com.carl.geek.service.b.model.UserAccountFreeze;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboService;
+import org.dromara.hmily.annotation.HmilyTCC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,9 +29,10 @@ import java.util.stream.Stream;
 @Slf4j
 @RequiredArgsConstructor
 @DubboService(version = "1.0.0", group = "b")
-public class AccountOperateImpl implements Service2AccountOperate {
+public class AccountOperateImpl implements ServiceAccountOperate {
 
     private final UserAccountMapperExt userAccountMapperExt;
+    private final UserAccountFreezeMapperExt userAccountFreezeMapperExt;
 
     private final Cache<String, Object> accountLockCache = CacheBuilder.newBuilder()
             .maximumSize(10)
@@ -138,39 +142,129 @@ public class AccountOperateImpl implements Service2AccountOperate {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean crossDatabase(CrossDatabaseBean accountOperateBean) {
-        String targetUserId = accountOperateBean.getLocalUserId();
+    @HmilyTCC(confirmMethod = "crossDbLocalOpConfirm", cancelMethod = "crossDbLocalOpCancel")
+    public boolean crossDbLocalOp(CrossDbLocalOpBean accountOperateBean) {
+        Integer accountType = accountOperateBean.getAccountType();
+        String localUserId = accountOperateBean.getTargetUserId();
+        BigDecimal amount = accountOperateBean.getAmount();
         UserAccount paraAccount = new UserAccount();
-        paraAccount.setType(accountOperateBean.getAccountType());
-        paraAccount.setUserId(targetUserId);
-        Object targetLock = accountLockCache.getIfPresent(targetUserId);
-        if (targetLock == null) {
-            synchronized (fromCacheLock) {
-                if (accountLockCache.getIfPresent(targetUserId) == null) {
-                    Object fromLockObj = new Object();
-                    accountLockCache.put(targetUserId, fromLockObj);
-                    targetLock = fromLockObj;
-                }
-                targetLock = targetLock == null ? accountLockCache.getIfPresent(targetUserId) : targetLock;
+        paraAccount.setType(accountType);
+        paraAccount.setUserId(localUserId);
+        Object accountLock = getUserAccountLock(localUserId);
+        synchronized (accountLock) {
+            UserAccount userAccount = userAccountMapperExt.selectOneForUpdate(paraAccount);
+            if (userAccount == null) {
+                throw new RuntimeException("查询数据异常");
+            }
+            BigDecimal balance = userAccount.getBalance();
+            BigDecimal updateMoney = balance.add(amount);
+            if (BigDecimal.ZERO.compareTo(updateMoney) > 0) {
+                throw new RuntimeException("余额不足");
+            }
+            if (BigDecimal.ZERO.compareTo(amount) > 0) {
+                //扣钱，需要将扣的钱冻结起来
+                UserAccount updateModel = new UserAccount();
+                updateModel.setId(userAccount.getId());
+                updateModel.setUpdateTime(new Date());
+                updateModel.setBalance(updateMoney);
+                userAccountMapperExt.updateByPrimaryKeySelective(updateModel);
+                UserAccountFreeze insertModel = new UserAccountFreeze();
+                insertModel.setAmount(amount);
+                insertModel.setCreateTime(new Date());
+                insertModel.setUpdateTime(new Date());
+                insertModel.setUserAccountId(userAccount.getId());
+                userAccountFreezeMapperExt.insert(insertModel);
+                accountOperateBean.setUserAccountFreezeId(insertModel.getId());
             }
         }
+        return true;
+    }
 
+    @Transactional(rollbackFor = Exception.class)
+    public void crossDbLocalOpConfirm(CrossDbLocalOpBean crossDatabaseReq) {
+        String targetUserId = crossDatabaseReq.getTargetUserId();
+        UserAccount paraAccount = new UserAccount();
+        paraAccount.setType(crossDatabaseReq.getAccountType());
+        paraAccount.setUserId(targetUserId);
+        Object targetLock = getUserAccountLock(targetUserId);
         synchronized (targetLock) {
             UserAccount userAccount = userAccountMapperExt.selectOneForUpdate(paraAccount);
             if (userAccount == null) {
                 throw new RuntimeException("查询数据异常");
             }
             BigDecimal balance = userAccount.getBalance();
-            BigDecimal updateMoney = balance.add(accountOperateBean.getAmount());
+            BigDecimal amount = crossDatabaseReq.getAmount();
+            BigDecimal updateMoney = balance.add(amount);
             if (BigDecimal.ZERO.compareTo(updateMoney) > 0) {
                 throw new RuntimeException("余额不足");
             }
-            UserAccount updateModel = new UserAccount();
-            updateModel.setId(userAccount.getId());
-            updateModel.setUpdateTime(new Date());
-            updateModel.setBalance(updateMoney);
-            userAccountMapperExt.updateByPrimaryKeySelective(updateModel);
+            if (BigDecimal.ZERO.compareTo(amount) > 0) {
+                //扣钱
+                userAccountFreezeMapperExt.deleteByPrimaryKey(crossDatabaseReq.getUserAccountFreezeId());
+            } else {
+                UserAccount updateModel = new UserAccount();
+                updateModel.setId(userAccount.getId());
+                updateModel.setUpdateTime(new Date());
+                updateModel.setBalance(updateMoney);
+                userAccountMapperExt.updateByPrimaryKeySelective(updateModel);
+            }
         }
-        return true;
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    public void crossDbLocalOpCancel(CrossDbLocalOpBean crossDatabaseReq) {
+        //分布式事物出现异常，删除冻结，同时将钱复原
+        Integer userAccountFreezeId = crossDatabaseReq.getUserAccountFreezeId();
+        String localUserId = crossDatabaseReq.getTargetUserId();
+        Object targetLock = getUserAccountLock(localUserId);
+        BigDecimal amount = crossDatabaseReq.getAmount();
+        Integer accountType = crossDatabaseReq.getAccountType();
+        UserAccount paraAccount = new UserAccount();
+        paraAccount.setType(accountType);
+        paraAccount.setUserId(localUserId);
+        synchronized (targetLock) {
+            UserAccount userAccount = userAccountMapperExt.selectOneForUpdate(paraAccount);
+            if (userAccount == null) {
+                throw new RuntimeException("查询数据异常");
+            }
+            if (userAccountFreezeId != null) {
+                //扣钱，将冻结的钱返回至原账号
+                UserAccount updateModel = new UserAccount();
+                updateModel.setId(userAccount.getId());
+                updateModel.setUpdateTime(new Date());
+                updateModel.setBalance(amount.negate().add(userAccount.getBalance()));
+                userAccountMapperExt.updateByPrimaryKeySelective(updateModel);
+                userAccountFreezeMapperExt.deleteByPrimaryKey(userAccountFreezeId);
+            } else {
+                //加钱，需要将加的钱删除
+                UserAccount updateModel = new UserAccount();
+                updateModel.setId(userAccount.getId());
+                updateModel.setUpdateTime(new Date());
+                updateModel.setBalance(amount.negate().add(userAccount.getBalance()));
+                userAccountMapperExt.updateByPrimaryKeySelective(updateModel);
+            }
+        }
+    }
+
+    /**
+     * 获取用户账号对应的锁
+     *
+     * @param userId 用户id
+     * @return 锁
+     */
+    private Object getUserAccountLock(String userId) {
+        Object targetLock = accountLockCache.getIfPresent(userId);
+        if (targetLock == null) {
+            synchronized (fromCacheLock) {
+                if (accountLockCache.getIfPresent(userId) == null) {
+                    Object fromLockObj = new Object();
+                    accountLockCache.put(userId, fromLockObj);
+                    targetLock = fromLockObj;
+                }
+                targetLock = targetLock == null ? accountLockCache.getIfPresent(userId) : targetLock;
+            }
+        }
+        return targetLock;
     }
 }

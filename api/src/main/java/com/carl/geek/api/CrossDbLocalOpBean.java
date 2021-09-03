@@ -8,23 +8,17 @@ import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 /**
- * 跨库交易参数model
+ * 跨库本地操作
  * @author carl.che
  */
 @Data
-public class CrossDatabaseBean {
+public class CrossDbLocalOpBean {
 
     /**
-     * 本地用户
+     * 发起用户
      */
-    @NotBlank(message = "fromUserId不能为空")
-    private String fromUserId;
-
-    /**
-     * 远程用户
-     */
-    @NotBlank(message = "toUserId不能为空")
-    private String toUserId;
+    @NotBlank(message = "targetUserId不能为空")
+    private String targetUserId;
 
     /**
      * 账号类型
@@ -33,10 +27,10 @@ public class CrossDatabaseBean {
     private Integer accountType;
 
     /**
-     * 转账金额
+     * 金额
      */
-    @NotNull(message = "转账金额不能为空")
     @Digits(integer = 10, fraction = 2, message = "转账金额整数部分不能超过{integer}位,小数部分不能超过{fraction}位")
+    @NotNull(message = "金额不能为空")
     private BigDecimal amount;
 
     /**

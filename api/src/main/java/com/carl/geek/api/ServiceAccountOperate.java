@@ -1,9 +1,11 @@
 package com.carl.geek.api;
 
+import org.dromara.hmily.annotation.Hmily;
+
 /**
  * @author carl.che
  */
-public interface Service1AccountOperate {
+public interface ServiceAccountOperate {
 
     /**
      * 账号操作接口(账号余额的增加，减少)
@@ -15,7 +17,8 @@ public interface Service1AccountOperate {
     /**
      * 跨库交易
      */
-    boolean crossDatabase(CrossDatabaseBean crossDatabaseBean);
+    @Hmily
+    boolean crossDbLocalOp(CrossDbLocalOpBean crossDbLocalOpBean);
 
 
 

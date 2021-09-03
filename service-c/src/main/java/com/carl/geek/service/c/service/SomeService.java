@@ -1,7 +1,9 @@
 package com.carl.geek.service.c.service;
 
-import com.carl.geek.api.Service1AccountOperate;
-import com.carl.geek.api.AccountOperateBean;
+import com.carl.geek.api.CrossDatabaseBean;
+import com.carl.geek.api.CrossDbLocalOpBean;
+import com.carl.geek.api.CrossDbOp;
+import com.carl.geek.api.ServiceAccountOperate;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.dromara.hmily.annotation.HmilyTCC;
@@ -14,28 +16,46 @@ import java.math.BigDecimal;
  */
 @Service
 @Slf4j
-public class SomeService {
+public class SomeService implements CrossDbOp {
 
     @DubboReference(version = "1.0.0", group = "a")
-    private Service1AccountOperate accountOperate;
+    private ServiceAccountOperate aService;
+
+    @DubboReference(version = "1.0.0", group = "b")
+    private ServiceAccountOperate bService;
 
 
-    @HmilyTCC(confirmMethod = "confirm", cancelMethod = "cancel")
-    public void op(){
-        AccountOperateBean accountOperateBean = new AccountOperateBean();
-        accountOperateBean.setAccountType(1);
-        accountOperateBean.setFromUserId("zhangsan");
-        accountOperateBean.setToUserId("lisi");
-        accountOperateBean.setMoney(new BigDecimal("10"));
-        boolean operate = accountOperate.operate(accountOperateBean);
+    @Override
+    @HmilyTCC(confirmMethod = "crossDbOpConfirm", cancelMethod = "crossDbOpCancel")
+    public boolean crossDbOp(CrossDatabaseBean crossDatabaseBean){
+        // 转账中
+        String fromUserId = crossDatabaseBean.getFromUserId();
+        String toUserId = crossDatabaseBean.getToUserId();
+        Integer accountType = crossDatabaseBean.getAccountType();
+        BigDecimal amount = crossDatabaseBean.getAmount();
+
+        CrossDbLocalOpBean aOpBean = new CrossDbLocalOpBean();
+        aOpBean.setTargetUserId(fromUserId);
+        aOpBean.setAccountType(accountType);
+        aOpBean.setAmount(amount.negate());
+        aService.crossDbLocalOp(aOpBean);
+
+        CrossDbLocalOpBean bOpBean = new CrossDbLocalOpBean();
+        bOpBean.setTargetUserId(toUserId);
+        bOpBean.setAccountType(accountType);
+        bOpBean.setAmount(amount);
+        bService.crossDbLocalOp(bOpBean);
+        return true;
     }
 
-    public void confirm(){
-
+    public boolean crossDbOpConfirm(CrossDatabaseBean crossDatabaseBean){
+        //转账成功
+        return true;
     }
 
-    public void cancel(){
-
+    public boolean crossDbOpCancel(CrossDatabaseBean crossDatabaseBean){
+        //转账失败
+        return true;
     }
 
 

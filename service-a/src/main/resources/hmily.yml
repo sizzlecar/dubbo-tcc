@@ -4,7 +4,7 @@ hmily:
     appName:
   #  如果server.configMode eq local 的时候才会读取到这里的配置信息.
   config:
-    appName: service-c-hmily
+    appName: service-a-hmily
     serializer: kryo
     contextTransmittalMode: threadLocal
     scheduledThreadMax: 16
