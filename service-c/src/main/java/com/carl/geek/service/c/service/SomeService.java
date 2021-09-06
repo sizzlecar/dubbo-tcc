@@ -59,7 +59,6 @@ public class SomeService implements CrossDbOp {
         bOpBean.setAccountType(accountType);
         bOpBean.setAmount(amount);
         bService.crossDbLocalOp(bOpBean);
-        if( 1 == 1 )  throw new RuntimeException("11111");
         return true;
     }
 

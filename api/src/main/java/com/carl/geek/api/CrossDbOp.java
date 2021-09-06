@@ -10,7 +10,6 @@ public interface CrossDbOp {
     /**
      * 跨db转账
      */
-    @Hmily
     boolean crossDbOp(CrossDatabaseBean crossDatabaseBean);
 
 }
